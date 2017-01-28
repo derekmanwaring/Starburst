@@ -55,7 +55,22 @@ public class Robot extends IterativeRobot {
 		// Drive for 2 seconds
 		if (timer.get() < 2.0) {
 			myRobot.drive(-0.5, 0.0); // drive forwards half speed
-		} else {
+		} else if (timer.get() <3.0) {
+			myRobot.tankDrive(0.73, -0.73);
+			
+		} else if (timer.get() <5.0) {
+			myRobot.drive(-0.5, 0.0);
+		} else if (timer.get() <6.0){
+		myRobot.tankDrive(0.73, -0.73);
+		
+		} else if (timer.get() <8.0) {
+			myRobot.drive(-0.5, 0.0);
+		} else if (timer.get() <9.0) {
+			myRobot.tankDrive(0.73, -0.73);
+			
+		} else if (timer.get() <11.0) {
+			myRobot.drive(-0.5, 0.0);
+		} else {	
 			myRobot.drive(0.0, 0.0); // stop robot
 		}
 	}
@@ -85,3 +100,4 @@ public class Robot extends IterativeRobot {
 		LiveWindow.run();
 	}
 }
+ 

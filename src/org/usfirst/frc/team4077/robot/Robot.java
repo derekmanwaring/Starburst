@@ -1,12 +1,30 @@
 package org.usfirst.frc.team4077.robot;
 
+import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
+
 import com.ctre.CANTalon;
+
+import edu.wpi.cscore.CvSink;
+import edu.wpi.cscore.CvSource;
+import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import org.opencv.core.Rect;
+import org.opencv.imgproc.Imgproc;
+import com.ctre.CANTalon;
+import edu.wpi.cscore.UsbCamera;
+import edu.wpi.first.wpilibj.CameraServer;
+import edu.wpi.first.wpilibj.IterativeRobot;
+import edu.wpi.first.wpilibj.RobotDrive;
+import edu.wpi.first.wpilibj.vision.VisionRunner;
+import edu.wpi.first.wpilibj.vision.VisionThread;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -23,6 +41,15 @@ public class Robot extends IterativeRobot {
 	Joystick stick = new Joystick(0);
 	Timer timer = new Timer();
 	RobotDrive myRobot = new RobotDrive(frontLeft, rearLeft, frontRight, rearRight);
+	
+	
+	private static final int IMG_WIDTH = 320;
+	private static final int IMG_HEIGHT = 240;
+	
+	private VisionThread visionThread;
+	private double centerX = 0.0;
+	private final Object imgLock = new Object();
+
 
 	    
 	
@@ -33,12 +60,23 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void robotInit() {
-
-		CameraServer.getInstance().startAutomaticCapture();
+		 UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
+		    camera.setResolution(IMG_WIDTH, IMG_HEIGHT);
+		    
+		    visionThread = new VisionThread(camera, new Pipeline(), pipeline -> {
+		        if (!pipeline.filterContoursOutput().isEmpty()) {
+		            Rect r = Imgproc.boundingRect(pipeline.filterContoursOutput().get(0));
+		            synchronized (imgLock) {
+		                centerX = r.x + (r.width / 2);
+		            }
+		        }
+		    });
+		    visionThread.start();
+		        
 		
-	
-	}
 
+		
+	}
 	/**
 	 * This function is run once each time the robot enters autonomous mode
 	 */

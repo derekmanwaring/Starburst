@@ -6,7 +6,7 @@ import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
 import com.ctre.CANTalon;
-
+import org.usfirst.frc.team4077.robot.GripPipeline;
 import edu.wpi.cscore.CvSink;
 import edu.wpi.cscore.CvSource;
 import edu.wpi.cscore.UsbCamera;
@@ -42,11 +42,10 @@ public class Robot extends IterativeRobot {
 	Timer timer = new Timer();
 	RobotDrive myRobot = new RobotDrive(frontLeft, rearLeft, frontRight, rearRight);
 	
-	private static final int IMG_WIDTH = 640;
-	private static final int IMG_HEIGHT = 480;	
-//	private VisionThread visionThread;
-//	private double centerX = 0.0;
-//	private final Object imgLock = new Object();
+
+	private VisionThread visionThread;
+	private double centerX = 0.0;
+	private final Object imgLock = new Object();
 
 
 	    
@@ -58,18 +57,20 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void robotInit() {
-		 UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
-		    camera.setResolution(IMG_WIDTH, IMG_HEIGHT);
+		UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
+		// Set the resolution
+		camera.setResolution(640, 480);
+
 		    
-//		    visionThread = new VisionThread(camera, new Pipeline(), pipeline -> {
-//		        if (!pipeline.filterContoursOutput().isEmpty()) {
-//		            Rect r = Imgproc.boundingRect(pipeline.filterContoursOutput().get(0));
-//		            synchronized (imgLock) {
-//		                centerX = r.x + (r.width / 2);
-//		            }
-//		        }
-//		    });
-//		    visionThread.start();
+		    visionThread = new VisionThread(camera, new GripPipeline(), pipeline -> {
+		        if (pipeline.findBlobsOutput().empty()) {
+		            Rect r = Imgproc.boundingRect(pipeline.findBlobsOutput());
+		            synchronized (imgLock) {
+		                centerX = r.x + (r.width / 2);
+		            }
+		        }
+		    });
+		    visionThread.start();
 		        
 		
 

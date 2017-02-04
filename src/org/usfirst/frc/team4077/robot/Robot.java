@@ -1,6 +1,8 @@
 package org.usfirst.frc.team4077.robot;
 
+import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
@@ -25,6 +27,7 @@ import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.vision.VisionRunner;
 import edu.wpi.first.wpilibj.vision.VisionThread;
+import edu.wpi.first.wpilibj.DoubleSolenoid;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -34,10 +37,12 @@ import edu.wpi.first.wpilibj.vision.VisionThread;
  * directory.
  */
 public class Robot extends IterativeRobot {
-	CANTalon frontLeft = new CANTalon(3);
-	CANTalon rearLeft = new CANTalon(4);
-	CANTalon frontRight = new CANTalon(1);
-	CANTalon rearRight= new CANTalon(2);
+//	Definitions of OBjects
+	DoubleSolenoid DoubleSolenoide = new DoubleSolenoid(0, 1);
+	CANTalon frontLeft = new CANTalon(2);
+	CANTalon rearLeft = new CANTalon(1);
+	CANTalon frontRight = new CANTalon(3);
+	CANTalon rearRight= new CANTalon(4);
 	Joystick stick = new Joystick(0);
 	Timer timer = new Timer();
 	RobotDrive myRobot = new RobotDrive(frontLeft, rearLeft, frontRight, rearRight);
@@ -57,18 +62,42 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void robotInit() {
+		frontLeft.setInverted(true);
+		rearLeft.setInverted(true);
+		frontRight.setInverted(true);
+		rearRight.setInverted(true);
+		
+//		Camera Section and Vision Tracking	
 		UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
 		// Set the resolution
 		camera.setResolution(640, 480);
+		
+		// Get a CvSink. This will capture Mats from the camera
+		CvSink cvSink = CameraServer.getInstance().getVideo();
+		// Setup a CvSource. This will send images back to the Dashboard
+		CvSource outputStream = CameraServer.getInstance().putVideo("Circle", 640, 480);
 
-		    
+	 	Mat mat = new Mat();
 		    visionThread = new VisionThread(camera, new GripPipeline(), pipeline -> {
-		        if (pipeline.findBlobsOutput().empty()) {
-		            Rect r = Imgproc.boundingRect(pipeline.findBlobsOutput());
-		            synchronized (imgLock) {
-		                centerX = r.x + (r.width / 2);
-		            }
-		        }
+				Imgproc.circle(mat, new Point(0.0, 0.0), 40, new Scalar(255, 255, 255));
+				outputStream.putFrame(mat);
+		   
+//		    	outputStream.putFrame(mat);
+//				if (cvSink.grabFrame(mat) == 0) {
+//					// Send the output the error.
+//					outputStream.notifyError(cvSink.getError());
+//					// skip the rest of the current iteration
+//					return;
+//				}
+//		        MatOfKeyPoint findBlobsOutput = pipeline.findBlobsOutput();
+//				if (findBlobsOutput.empty()) {
+//					KeyPoint theFirstKeyPoint = findBlobsOutput.toList().get(0);
+//					Imgproc.circle(mat, theFirstKeyPoint.pt, (int)(theFirstKeyPoint.size / 2.0f), new Scalar(255, 255, 255));
+//		            synchronized (imgLock) {
+//		                centerX = theFirstKeyPoint.pt.x;
+//		                System.out.println("CenterX" + centerX);
+//		            }
+//		        }
 		    });
 		    visionThread.start();
 		        
@@ -128,9 +157,17 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void teleopPeriodic() {
+//		Arcade Drive for Robot
 		myRobot.arcadeDrive(stick);
 		System.out.println("x-axis; " + stick.getX());
 		System.out.println("y-axis; " + stick.getX());
+		
+		if(stick.getRawButton(7))
+			 DoubleSolenoide.set(DoubleSolenoid.Value.kForward);
+		else DoubleSolenoide.set(DoubleSolenoid.Value.kOff);
+		System.out.println("DoubleSolenoid;"+ DoubleSolenoide.get());
+//			DoubleSolenoide.set(DoubleSolenoid.Value.kReverse);
+
 
 	}
 
@@ -142,4 +179,3 @@ public class Robot extends IterativeRobot {
 		LiveWindow.run();
 	}
 }
- 

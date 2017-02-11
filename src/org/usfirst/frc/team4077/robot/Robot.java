@@ -17,6 +17,8 @@ import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.buttons.Button;
+import edu.wpi.first.wpilibj.buttons.JoystickButton;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import org.opencv.core.Rect;
 import org.opencv.imgproc.Imgproc;
@@ -28,6 +30,7 @@ import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.vision.VisionRunner;
 import edu.wpi.first.wpilibj.vision.VisionThread;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -38,20 +41,16 @@ import edu.wpi.first.wpilibj.DoubleSolenoid;
  */
 public class Robot extends IterativeRobot {
 //	Definitions of OBjects
-	DoubleSolenoid DoubleSolenoide = new DoubleSolenoid(0, 1);
+	DoubleSolenoid DoubleSolenoid = new DoubleSolenoid(0, 1);
 	CANTalon frontLeft = new CANTalon(2);
 	CANTalon rearLeft = new CANTalon(1);
 	CANTalon frontRight = new CANTalon(3);
 	CANTalon rearRight= new CANTalon(4);
 	Joystick stick = new Joystick(0);
 	Timer timer = new Timer();
+	Button button1 = new JoystickButton(stick, 1);
 	RobotDrive myRobot = new RobotDrive(frontLeft, rearLeft, frontRight, rearRight);
-	
-
-	private VisionThread visionThread;
-	private double centerX = 0.0;
-	private final Object imgLock = new Object();
-
+	double centerX = 0.0;
 
 	    
 	
@@ -67,43 +66,38 @@ public class Robot extends IterativeRobot {
 		frontRight.setInverted(true);
 		rearRight.setInverted(true);
 		
+		
+		
+		
+		
 //		Camera Section and Vision Tracking	
+//		defaultCamera();
+		
+		visionTrackingCamera();
+		
+	}
+	private void visionTrackingCamera() {
+		// TODO Auto-generated method stub
+		VisionThread visionThread;
+		Object imgLock = new Object();
+		UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
+		camera.setResolution(320, 240);
+		visionThread = new VisionThread(camera, new GripPipeline(), pipeline -> {
+			if (!pipeline.filterContoursOutput().isEmpty()){
+				Rect r= Imgproc.boundingRect(pipeline.filterContoursOutput().get(0));
+				synchronized (imgLock){
+					centerX = r.x + (r.width/2);
+					
+				}
+			}
+		});
+		visionThread.start();
+		
+	}
+	private void defaultCamera() {
 		UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
 		// Set the resolution
 		camera.setResolution(640, 480);
-		
-		// Get a CvSink. This will capture Mats from the camera
-		CvSink cvSink = CameraServer.getInstance().getVideo();
-		// Setup a CvSource. This will send images back to the Dashboard
-		CvSource outputStream = CameraServer.getInstance().putVideo("Circle", 640, 480);
-
-	 	Mat mat = new Mat();
-		    visionThread = new VisionThread(camera, new GripPipeline(), pipeline -> {
-				Imgproc.circle(mat, new Point(0.0, 0.0), 40, new Scalar(255, 255, 255));
-				outputStream.putFrame(mat);
-		   
-//		    	outputStream.putFrame(mat);
-//				if (cvSink.grabFrame(mat) == 0) {
-//					// Send the output the error.
-//					outputStream.notifyError(cvSink.getError());
-//					// skip the rest of the current iteration
-//					return;
-//				}
-//		        MatOfKeyPoint findBlobsOutput = pipeline.findBlobsOutput();
-//				if (findBlobsOutput.empty()) {
-//					KeyPoint theFirstKeyPoint = findBlobsOutput.toList().get(0);
-//					Imgproc.circle(mat, theFirstKeyPoint.pt, (int)(theFirstKeyPoint.size / 2.0f), new Scalar(255, 255, 255));
-//		            synchronized (imgLock) {
-//		                centerX = theFirstKeyPoint.pt.x;
-//		                System.out.println("CenterX" + centerX);
-//		            }
-//		        }
-		    });
-		    visionThread.start();
-		        
-		
-
-		
 	}
 	/**
 	 * This function is run once each time the robot enters autonomous mode
@@ -161,13 +155,12 @@ public class Robot extends IterativeRobot {
 		myRobot.arcadeDrive(stick);
 		System.out.println("x-axis; " + stick.getX());
 		System.out.println("y-axis; " + stick.getX());
+	System.out.println("camera" + centerX);
+		DoubleSolenoid.set(Value.kForward);
 		
-		if(stick.getRawButton(7))
-			 DoubleSolenoide.set(DoubleSolenoid.Value.kForward);
-		else DoubleSolenoide.set(DoubleSolenoid.Value.kOff);
-		System.out.println("DoubleSolenoid;"+ DoubleSolenoide.get());
-//			DoubleSolenoide.set(DoubleSolenoid.Value.kReverse);
-
+		
+		
+		
 
 	}
 

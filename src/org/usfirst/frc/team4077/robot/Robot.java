@@ -153,8 +153,6 @@ public class Robot extends IterativeRobot {
 	public void teleopPeriodic() {
 //		Arcade Drive for Robot
 		myRobot.arcadeDrive(stick);
-		System.out.println("x-axis; " + stick.getX());
-		System.out.println("y-axis; " + stick.getX());
 	System.out.println("camera" + centerX);
 		DoubleSolenoid.set(Value.kForward);
 		

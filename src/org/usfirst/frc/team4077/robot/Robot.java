@@ -41,14 +41,15 @@ import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
  */
 public class Robot extends IterativeRobot {
 //	Definitions of OBjects
-	DoubleSolenoid DoubleSolenoid = new DoubleSolenoid(0, 1);
+	DoubleSolenoid DS1 = new DoubleSolenoid(0, 1);
+	DoubleSolenoid DS2 = new DoubleSolenoid(2, 3);
+	DoubleSolenoid DS3 = new DoubleSolenoid(4, 5);
 	CANTalon frontLeft = new CANTalon(2);
 	CANTalon rearLeft = new CANTalon(1);
 	CANTalon frontRight = new CANTalon(3);
 	CANTalon rearRight= new CANTalon(4);
 	Joystick stick = new Joystick(0);
 	Timer timer = new Timer();
-	Button button1 = new JoystickButton(stick, 1);
 	RobotDrive myRobot = new RobotDrive(frontLeft, rearLeft, frontRight, rearRight);
 	double centerX = 0.0;
 	double centerY = 0.0;
@@ -88,7 +89,7 @@ public class Robot extends IterativeRobot {
 				Rect r= Imgproc.boundingRect(pipeline.filterContoursOutput().get(0));
 				synchronized (imgLock){
 					centerX = r.x + (r.width/2);
-					centerY = r.y;
+					centerY = r.y -(r.height/2);
 					
 				}
 			}
@@ -117,8 +118,7 @@ public class Robot extends IterativeRobot {
 					// skip the rest of the current iteration
 					continue;
 				}
-				Imgproc.circle(mat, new Point(centerX,centerY), 20, new Scalar(255,0,0), 3);
-				System.out.println("camera x:" + centerX + " y:" + centerY);
+				Imgproc.circle(mat, new Point(centerX,centerY), 20, new Scalar(0,255,0), 3);
 				
 		
 				// Give the output stream a new image to display
@@ -189,7 +189,29 @@ public class Robot extends IterativeRobot {
 //		Arcade Drive for Robot
 		myRobot.arcadeDrive(stick);
 	
-		DoubleSolenoid.set(Value.kForward);
+		if (stick.getRawButton(5)) {
+			DS1.set(DoubleSolenoid.Value.kForward);
+			
+		} else {
+			DS1.set(DoubleSolenoid.Value.kOff);
+		
+		}
+
+		if (stick.getRawButton(6)) {
+			DS2.set(DoubleSolenoid.Value.kForward);
+			
+		} else {
+			DS2.set(DoubleSolenoid.Value.kOff);
+		
+		}
+
+		if (stick.getRawButton(1)) {
+			DS3.set(DoubleSolenoid.Value.kForward);
+			
+		} else {
+			DS3.set(DoubleSolenoid.Value.kOff);
+		
+		}
 		
 		
 		

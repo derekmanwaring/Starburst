@@ -51,6 +51,7 @@ public class Robot extends IterativeRobot {
 	Button button1 = new JoystickButton(stick, 1);
 	RobotDrive myRobot = new RobotDrive(frontLeft, rearLeft, frontRight, rearRight);
 	double centerX = 0.0;
+	double centerY = 0.0;
 
 	    
 	
@@ -87,11 +88,45 @@ public class Robot extends IterativeRobot {
 				Rect r= Imgproc.boundingRect(pipeline.filterContoursOutput().get(0));
 				synchronized (imgLock){
 					centerX = r.x + (r.width/2);
+					centerY = r.y;
 					
 				}
 			}
 		});
 		visionThread.start();
+		Thread visionThread2;
+		visionThread2 = new Thread(() -> {
+		
+			// Get a CvSink. This will capture Mats from the camera
+			CvSink cvSink = CameraServer.getInstance().getVideo();
+			// Setup a CvSource. This will send images back to the Dashboard
+			CvSource outputStream = CameraServer.getInstance().putVideo("Target", 320, 240);
+
+			// Mats are very memory expensive. Lets reuse this Mat.
+			Mat mat = new Mat();
+
+			// This cannot be 'true'. The program will never exit if it is. This
+			// lets the robot stop this thread when restarting robot code or
+			// deploying.
+			while (!Thread.interrupted()) {
+				// Tell the CvSink to grab a frame from the camera and put it
+				// in the source mat.  If there is an error notify the output.
+				if (cvSink.grabFrame(mat) == 0) {
+					// Send the output the error.
+					outputStream.notifyError(cvSink.getError());
+					// skip the rest of the current iteration
+					continue;
+				}
+				Imgproc.circle(mat, new Point(centerX,centerY), 20, new Scalar(255,0,0), 3);
+				System.out.println("camera x:" + centerX + " y:" + centerY);
+				
+		
+				// Give the output stream a new image to display
+				outputStream.putFrame(mat);
+			}
+		});
+		visionThread2.setDaemon(true);
+		visionThread2.start();
 		
 	}
 	private void defaultCamera() {
@@ -153,7 +188,7 @@ public class Robot extends IterativeRobot {
 	public void teleopPeriodic() {
 //		Arcade Drive for Robot
 		myRobot.arcadeDrive(stick);
-	System.out.println("camera" + centerX);
+	
 		DoubleSolenoid.set(Value.kForward);
 		
 		

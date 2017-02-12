@@ -41,9 +41,9 @@ import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
  */
 public class Robot extends IterativeRobot {
 //	Definitions of OBjects
-	DoubleSolenoid DS1 = new DoubleSolenoid(0, 1);
-	DoubleSolenoid DS2 = new DoubleSolenoid(2, 3);
-	DoubleSolenoid DS3 = new DoubleSolenoid(4, 5);
+	DoubleSolenoid Piston1 = new DoubleSolenoid(0, 1);
+	DoubleSolenoid Piston2 = new DoubleSolenoid(2, 3);
+	DoubleSolenoid Hand = new DoubleSolenoid(4, 5);
 	CANTalon frontLeft = new CANTalon(2);
 	CANTalon rearLeft = new CANTalon(1);
 	CANTalon frontRight = new CANTalon(3);
@@ -73,7 +73,7 @@ public class Robot extends IterativeRobot {
 		
 		
 //		Camera Section and Vision Tracking	
-//		defaultCamera();
+		defaultCamera();
 		
 		visionTrackingCamera();
 		
@@ -189,31 +189,25 @@ public class Robot extends IterativeRobot {
 //		Arcade Drive for Robot
 		myRobot.arcadeDrive(stick);
 	
-		if (stick.getRawButton(5)) {
-			DS1.set(DoubleSolenoid.Value.kForward);
+		if (stick.getRawButton(3)) {
+			Piston1.set(DoubleSolenoid.Value.kReverse);
+			Piston2.set(DoubleSolenoid.Value.kReverse);
 			
-		} else {
-			DS1.set(DoubleSolenoid.Value.kOff);
-		
 		}
-
-		if (stick.getRawButton(6)) {
-			DS2.set(DoubleSolenoid.Value.kForward);
-			
-		} else {
-			DS2.set(DoubleSolenoid.Value.kOff);
-		
+		if (stick.getRawButton(4)) {
+			Piston1.set(DoubleSolenoid.Value.kForward);
+			Piston2.set(DoubleSolenoid.Value.kForward);
 		}
-
+		
+		if (stick.getRawButton(2)) {
+			Piston1.set(DoubleSolenoid.Value.kForward);
+			Piston2.set(DoubleSolenoid.Value.kReverse);
+		}
 		if (stick.getRawButton(1)) {
-			DS3.set(DoubleSolenoid.Value.kForward);
-			
-		} else {
-			DS3.set(DoubleSolenoid.Value.kOff);
-		
+			Hand.set(DoubleSolenoid.Value.kForward);
+		}else{
+			Hand.set(DoubleSolenoid.Value.kReverse);
 		}
-		
-		
 		
 		
 

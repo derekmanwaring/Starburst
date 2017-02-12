@@ -1,8 +1,12 @@
 package org.usfirst.frc.team4077.robot;
 
+import java.util.ArrayList;
+import java.util.Date;
+
 import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfKeyPoint;
+import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
@@ -44,16 +48,18 @@ public class Robot extends IterativeRobot {
 	DoubleSolenoid Piston1 = new DoubleSolenoid(0, 1);
 	DoubleSolenoid Piston2 = new DoubleSolenoid(2, 3);
 	DoubleSolenoid Hand = new DoubleSolenoid(4, 5);
-	CANTalon frontLeft = new CANTalon(2);
-	CANTalon rearLeft = new CANTalon(1);
-	CANTalon frontRight = new CANTalon(3);
-	CANTalon rearRight= new CANTalon(4);
+	CANTalon frontLeft = new CANTalon(3);
+	CANTalon rearLeft = new CANTalon(4);
+	CANTalon frontRight = new CANTalon(1);
+	CANTalon rearRight= new CANTalon(2);
 	Joystick stick = new Joystick(0);
 	Timer timer = new Timer();
 	RobotDrive myRobot = new RobotDrive(frontLeft, rearLeft, frontRight, rearRight);
-	double centerX = 0.0;
-	double centerY = 0.0;
-
+	int centerX = 0;
+	int centerY = 0;
+	long lastTimeSeen = 0;
+	int numberOfContours = 0;
+	int separationDistance = 0;
 	    
 	
 
@@ -73,7 +79,7 @@ public class Robot extends IterativeRobot {
 		
 		
 //		Camera Section and Vision Tracking	
-		defaultCamera();
+//		defaultCamera();
 		
 		visionTrackingCamera();
 		
@@ -85,13 +91,30 @@ public class Robot extends IterativeRobot {
 		UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
 		camera.setResolution(320, 240);
 		visionThread = new VisionThread(camera, new GripPipeline(), pipeline -> {
-			if (!pipeline.filterContoursOutput().isEmpty()){
-				Rect r= Imgproc.boundingRect(pipeline.filterContoursOutput().get(0));
-				synchronized (imgLock){
-					centerX = r.x + (r.width/2);
-					centerY = r.y -(r.height/2);
-					
+			ArrayList<MatOfPoint> filterContoursOutput = pipeline.filterContoursOutput();
+			numberOfContours = filterContoursOutput.size();
+			if (numberOfContours == 2){
+				Rect r1= Imgproc.boundingRect(filterContoursOutput.get(0));
+				Rect r2= Imgproc.boundingRect(filterContoursOutput.get(1));
+				int	centerXr1 = r1.x + (r1.width/2);
+				int	centerYr1 = r1.y + (r1.height/2);
+				int	centerXr2 = r2.x + (r2.width/2);
+				int	centerYr2 = r2.y + (r2.height/2);
+				int centerXBiggerValue = 0;
+				int centerXSmallerValue = 0;
+				if (centerXr1 < centerXr2){
+					centerXBiggerValue = centerXr2;
+					centerXSmallerValue = centerXr1;
+				}else{
+					centerXBiggerValue = centerXr1;
+					centerXSmallerValue = centerXr2;
 				}
+				 separationDistance = centerXBiggerValue - centerXSmallerValue;
+				 if (separationDistance < 160){
+					 lastTimeSeen = System.currentTimeMillis();
+					 centerX = separationDistance/2+centerXSmallerValue;
+					 centerY = centerYr1;
+				 }
 			}
 		});
 		visionThread.start();
@@ -119,6 +142,10 @@ public class Robot extends IterativeRobot {
 					continue;
 				}
 				Imgproc.circle(mat, new Point(centerX,centerY), 20, new Scalar(0,255,0), 3);
+				Date lastSeenAsDate = new Date(lastTimeSeen);
+				System.out.println(String.format("Last seen at %2d:%2d, Number: %1d, Distance: %3d, X: %3d, Y:%3d",
+						lastSeenAsDate.getMinutes(), lastSeenAsDate.getSeconds(),
+						numberOfContours, separationDistance, centerX, centerY));
 				
 		
 				// Give the output stream a new image to display
@@ -148,28 +175,14 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void autonomousPeriodic() {
-		// Drive for 2 seconds
-		if (timer.get() < 2.0) {
-			myRobot.drive(-0.5, 0.0); // drive forwards half speed
-		} else if (timer.get() <3.0) {
-			myRobot.tankDrive(0.71, -0.71);
-			
-		} else if (timer.get() <5.0) {
-			myRobot.drive(-0.5, 0.0);
-		} else if (timer.get() <6.0){
-		myRobot.tankDrive(0.71, -0.71);
-		
-		} else if (timer.get() <8.0) {
-			myRobot.drive(-0.5, 0.0);
-		} else if (timer.get() <9.0) {
-			myRobot.tankDrive(0.71, -0.71);
-			
-		} else if (timer.get() <11.0) {
-			myRobot.drive(-0.5, 0.0);
-		} else if (timer.get() <12.0) {
-			myRobot.tankDrive(0.71, -0.71);
-		} else {	
-			myRobot.drive(0.0, 0.0); // stop robot
+		if (lastTimeSeen < (System.currentTimeMillis() - 1000)){
+			myRobot.drive (0.0,0.0);
+			return;
+		}
+		if (separationDistance < 145) {
+			myRobot.drive(-0.25, 0.0);
+		}else{
+			myRobot.drive (0.0,0.0);
 		}
 	}
 

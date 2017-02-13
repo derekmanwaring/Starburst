@@ -17,6 +17,7 @@ import edu.wpi.cscore.CvSink;
 import edu.wpi.cscore.CvSource;
 import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.wpilibj.CameraServer;
+import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotDrive;
@@ -50,8 +51,9 @@ public class Robot extends IterativeRobot {
 	DoubleSolenoid Hand = new DoubleSolenoid(4, 5);
 	CANTalon frontLeft = new CANTalon(3);
 	CANTalon rearLeft = new CANTalon(4);
-	CANTalon frontRight = new CANTalon(1);
-	CANTalon rearRight= new CANTalon(2);
+	CANTalon frontRight = new CANTalon(2);
+	CANTalon rearRight= new CANTalon(1);
+	CANTalon RopeClimb = new CANTalon(5);
 	Joystick stick = new Joystick(0);
 	Timer timer = new Timer();
 	RobotDrive myRobot = new RobotDrive(frontLeft, rearLeft, frontRight, rearRight);
@@ -60,6 +62,7 @@ public class Robot extends IterativeRobot {
 	long lastTimeSeen = 0;
 	int numberOfContours = 0;
 	int separationDistance = 0;
+	Compressor c = new Compressor(0);
 	    
 	
 
@@ -69,10 +72,10 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void robotInit() {
-		frontLeft.setInverted(true);
-		rearLeft.setInverted(true);
-		frontRight.setInverted(true);
-		rearRight.setInverted(true);
+//		frontLeft.setInverted(true);
+//		rearLeft.setInverted(true);
+//		frontRight.setInverted(true);
+//		rearRight.setInverted(true);
 		
 		
 		
@@ -201,25 +204,40 @@ public class Robot extends IterativeRobot {
 	public void teleopPeriodic() {
 //		Arcade Drive for Robot
 		myRobot.arcadeDrive(stick);
+		
+		
+		if (stick.getRawButton(5)) {
+		c.setClosedLoopControl(true);
+		}
+		if (stick.getRawButton(6)){
+		c.setClosedLoopControl(false);
+		}
+
 	
 		if (stick.getRawButton(3)) {
 			Piston1.set(DoubleSolenoid.Value.kReverse);
 			Piston2.set(DoubleSolenoid.Value.kReverse);
 			
 		}
+
 		if (stick.getRawButton(4)) {
 			Piston1.set(DoubleSolenoid.Value.kForward);
-			Piston2.set(DoubleSolenoid.Value.kForward);
+			Piston2.set(DoubleSolenoid.Value.kReverse);
+			
 		}
-		
 		if (stick.getRawButton(2)) {
 			Piston1.set(DoubleSolenoid.Value.kForward);
-			Piston2.set(DoubleSolenoid.Value.kReverse);
+			Piston2.set(DoubleSolenoid.Value.kForward);
 		}
 		if (stick.getRawButton(1)) {
 			Hand.set(DoubleSolenoid.Value.kForward);
 		}else{
 			Hand.set(DoubleSolenoid.Value.kReverse);
+		}
+		if (stick.getRawButton(8)) {
+			Piston1.set(DoubleSolenoid.Value.kOff);
+			Piston2.set(DoubleSolenoid.Value.kOff);
+			Hand.set(DoubleSolenoid.Value.kOff);
 		}
 		
 		

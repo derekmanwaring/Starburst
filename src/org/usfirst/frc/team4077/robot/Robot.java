@@ -30,6 +30,7 @@ import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotDrive;
+import edu.wpi.first.wpilibj.SpeedController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.buttons.Button;
 import edu.wpi.first.wpilibj.buttons.JoystickButton;
@@ -56,15 +57,16 @@ import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 
 //Note to thy self. Ye of little faith giveth up not hope -Scott Dong
 public class Robot extends IterativeRobot {
+private static final double SPEED_FACTOR = 0.25;
 //	Definitions of OBjects
 	DoubleSolenoid Piston1 = new DoubleSolenoid(0, 1);
 	DoubleSolenoid Piston2 = new DoubleSolenoid(2, 3);
 	DoubleSolenoid Hand = new DoubleSolenoid(4, 5);
-	CANTalon frontLeft;
-	CANTalon rearLeft;
-	CANTalon frontRight; 
-	CANTalon rearRight;
-	CANTalon RopeClimb = new CANTalon(5);
+	SpeedController frontLeft;
+	SpeedController rearLeft;
+	SpeedController frontRight; 
+	SpeedController rearRight;
+	SpeedController RopeClimb = new CANTalon(5);
 	Joystick Drivestick = new Joystick(0);
 	Joystick Armstick = new Joystick(1);
 	Timer timer = new Timer();
@@ -105,10 +107,10 @@ public class Robot extends IterativeRobot {
 		if (line != null) {
 			if (line.equals("Stella")) {
 				robotName = RobotName.STELLA;
-				frontLeft = new CANTalon(2);
-				rearLeft = new CANTalon(1);
-				frontRight = new CANTalon(3);
-				rearRight = new CANTalon(4);
+				frontLeft = new ScaledCANTalon(2, SPEED_FACTOR);
+				rearLeft = new ScaledCANTalon(1, SPEED_FACTOR);
+				frontRight = new ScaledCANTalon(3, SPEED_FACTOR);
+				rearRight = new ScaledCANTalon(4, SPEED_FACTOR);
 				
 				frontLeft.setInverted(true);
 				rearLeft.setInverted(true);
@@ -118,10 +120,10 @@ public class Robot extends IterativeRobot {
 
 			}else if (line.equals("Summer")) {
 				robotName = RobotName.SUMMER;
-				frontLeft = new CANTalon(3);
-				rearLeft = new CANTalon(4);
-				frontRight = new CANTalon(2);
-				rearRight = new CANTalon(1);
+				frontLeft = new ScaledCANTalon(3, SPEED_FACTOR);
+				rearLeft = new ScaledCANTalon(4, SPEED_FACTOR);
+				frontRight = new ScaledCANTalon(2, SPEED_FACTOR);
+				rearRight = new ScaledCANTalon(1, SPEED_FACTOR);
 			}else{
 				System.out.println("I don't know robotname" + line);
 			}

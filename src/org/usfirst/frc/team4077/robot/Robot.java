@@ -136,9 +136,9 @@ private static final double SPEED_FACTOR = 0.25;
 		
 		
 //		Camera Section and Vision Tracking	
-		defaultCamera();
+//		defaultCamera();
 		
-//		visionTrackingCamera();
+		visionTrackingCamera();
 		
 	}
 	private void visionTrackingCamera() {
@@ -198,7 +198,7 @@ private static final double SPEED_FACTOR = 0.25;
 					// skip the rest of the current iteration
 					continue;
 				}
-				Imgproc.circle(mat, new Point(centerX,centerY), 20, new Scalar(0,255,0), 3);
+				Imgproc.circle(mat, new Point(centerX,centerY), 20, new Scalar(255,0,0), 3);
 				Date lastSeenAsDate = new Date(lastTimeSeen);
 				System.out.println(String.format("Last seen at %2d:%2d, Number: %1d, Distance: %3d, X: %3d, Y:%3d",
 						lastSeenAsDate.getMinutes(), lastSeenAsDate.getSeconds(),

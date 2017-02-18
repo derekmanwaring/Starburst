@@ -42,9 +42,9 @@ public class GripPipeline implements VisionPipeline {
 	@Override	public void process(Mat source0) {
 		// Step HSL_Threshold0:
 		Mat hslThresholdInput = source0;
-		double[] hslThresholdHue = {66.36690647482015, 124.70989761092152};
-		double[] hslThresholdSaturation = {73.38129496402877, 255.0};
-		double[] hslThresholdLuminance = {107.77877697841726, 202.78156996587032};
+		double[] hslThresholdHue = {32.37410071942446, 47.91808873720134};
+		double[] hslThresholdSaturation = {50.44964028776978, 91.81740614334471};
+		double[] hslThresholdLuminance = {176.57374100719426, 255.0};
 		hslThreshold(hslThresholdInput, hslThresholdHue, hslThresholdSaturation, hslThresholdLuminance, hslThresholdOutput);
 
 		// Step Find_Contours0:
@@ -54,17 +54,17 @@ public class GripPipeline implements VisionPipeline {
 
 		// Step Filter_Contours0:
 		ArrayList<MatOfPoint> filterContoursContours = findContoursOutput;
-		double filterContoursMinArea = 100.0;
-		double filterContoursMinPerimeter = 0.0;
-		double filterContoursMinWidth = 0.0;
-		double filterContoursMaxWidth = 1000.0;
-		double filterContoursMinHeight = 0.0;
-		double filterContoursMaxHeight = 1000.0;
-		double[] filterContoursSolidity = {0.0, 100.0};
-		double filterContoursMaxVertices = 500.0;
-		double filterContoursMinVertices = 0.0;
+		double filterContoursMinArea = 50.0;
+		double filterContoursMinPerimeter = 30.0;
+		double filterContoursMinWidth = 5.0;
+		double filterContoursMaxWidth = 80.0;
+		double filterContoursMinHeight = 10.0;
+		double filterContoursMaxHeight = 220.0;
+		double[] filterContoursSolidity = {59.352517985611506, 100.0};
+		double filterContoursMaxVertices = 200.0;
+		double filterContoursMinVertices = 2.0;
 		double filterContoursMinRatio = 0.0;
-		double filterContoursMaxRatio = 1000.0;
+		double filterContoursMaxRatio = 1.0;
 		filterContours(filterContoursContours, filterContoursMinArea, filterContoursMinPerimeter, filterContoursMinWidth, filterContoursMaxWidth, filterContoursMinHeight, filterContoursMaxHeight, filterContoursSolidity, filterContoursMaxVertices, filterContoursMinVertices, filterContoursMinRatio, filterContoursMaxRatio, filterContoursOutput);
 
 	}
@@ -185,3 +185,4 @@ public class GripPipeline implements VisionPipeline {
 
 
 }
+

@@ -1,5 +1,14 @@
 package org.usfirst.frc.team4077.robot;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.management.ManagementFactory;
+import java.net.Inet4Address;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -44,27 +53,34 @@ import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
  * creating this project, you must also update the manifest file in the resource
  * directory.
  */
+
+//Note to thy self. Ye of little faith giveth up not hope -Scott Dong
 public class Robot extends IterativeRobot {
 //	Definitions of OBjects
 	DoubleSolenoid Piston1 = new DoubleSolenoid(0, 1);
 	DoubleSolenoid Piston2 = new DoubleSolenoid(2, 3);
 	DoubleSolenoid Hand = new DoubleSolenoid(4, 5);
-	CANTalon frontLeft = new CANTalon(3);
-	CANTalon rearLeft = new CANTalon(4);
-	CANTalon frontRight = new CANTalon(2);
-	CANTalon rearRight= new CANTalon(1);
+	CANTalon frontLeft;
+	CANTalon rearLeft;
+	CANTalon frontRight; 
+	CANTalon rearRight;
 	CANTalon RopeClimb = new CANTalon(5);
-	Joystick stick = new Joystick(0);
+	Joystick Drivestick = new Joystick(0);
+	Joystick Armstick = new Joystick(1);
 	Timer timer = new Timer();
-	RobotDrive myRobot = new RobotDrive(frontLeft, rearLeft, frontRight, rearRight);
+	RobotDrive myRobot;
 	int centerX = 0;
 	int centerY = 0;
 	long lastTimeSeen = 0;
 	int numberOfContours = 0;
 	int separationDistance = 0;
-	Compressor c = new Compressor(0);
+	Compressor C = new Compressor(0);
 	    
-	
+	RobotName robotName;
+	enum RobotName {
+		STELLA,
+		SUMMER
+	}
 
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -72,19 +88,55 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void robotInit() {
-//		frontLeft.setInverted(true);
-//		rearLeft.setInverted(true);
-//		frontRight.setInverted(true);
-//		rearRight.setInverted(true);
+		File cpuInfoFile = new File("/etc/RobotName");
+		String line = null;
+		try {
+			FileInputStream cpuFileInputStream = new FileInputStream(cpuInfoFile);
+			InputStreamReader cpuFileInputStreamReader = new InputStreamReader(cpuFileInputStream);
+			BufferedReader cpuFileBufferedReader = new BufferedReader(cpuFileInputStreamReader);
+			line = cpuFileBufferedReader.readLine();
+		} catch (FileNotFoundException e) {
+			System.out.println("Robotname file not found");
+		} catch (IOException e) {
+			System.out.println("Error reading robotname file");
+			e.printStackTrace();
+		}
+		System.out.println("Read RobotName from robotname:" + line);
+		if (line != null) {
+			if (line.equals("Stella")) {
+				robotName = RobotName.STELLA;
+				frontLeft = new CANTalon(2);
+				rearLeft = new CANTalon(1);
+				frontRight = new CANTalon(3);
+				rearRight = new CANTalon(4);
+				
+				frontLeft.setInverted(true);
+				rearLeft.setInverted(true);
+				frontRight.setInverted(true);
+				rearRight.setInverted(true);
+				
+
+			}else if (line.equals("Summer")) {
+				robotName = RobotName.SUMMER;
+				frontLeft = new CANTalon(3);
+				rearLeft = new CANTalon(4);
+				frontRight = new CANTalon(2);
+				rearRight = new CANTalon(1);
+			}else{
+				System.out.println("I don't know robotname" + line);
+			}
+			myRobot = new RobotDrive(frontLeft, rearLeft, frontRight, rearRight);
+		}
+	
 		
 		
 		
 		
 		
 //		Camera Section and Vision Tracking	
-//		defaultCamera();
+		defaultCamera();
 		
-		visionTrackingCamera();
+//		visionTrackingCamera();
 		
 	}
 	private void visionTrackingCamera() {
@@ -203,38 +255,39 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void teleopPeriodic() {
 //		Arcade Drive for Robot
-		myRobot.arcadeDrive(stick);
+		myRobot.arcadeDrive(Drivestick);
+//		myRobot.tankDrive(Drivestick.getRawAxis(1), Drivestick.getRawAxis(5));;
 		
-		
-		if (stick.getRawButton(5)) {
-		c.setClosedLoopControl(true);
+//		Compressor Control
+		if (Drivestick.getRawButton(5)) {
+		C.setClosedLoopControl(true);
 		}
-		if (stick.getRawButton(6)){
-		c.setClosedLoopControl(false);
+		if (Drivestick.getRawButton(6)){
+		C.setClosedLoopControl(false);
 		}
 
-	
-		if (stick.getRawButton(3)) {
+//		Solenoids Control
+		if (Drivestick.getRawButton(3)) {
 			Piston1.set(DoubleSolenoid.Value.kReverse);
 			Piston2.set(DoubleSolenoid.Value.kReverse);
 			
 		}
 
-		if (stick.getRawButton(4)) {
+		if (Drivestick.getRawButton(4)) {
 			Piston1.set(DoubleSolenoid.Value.kForward);
 			Piston2.set(DoubleSolenoid.Value.kReverse);
 			
 		}
-		if (stick.getRawButton(2)) {
+		if (Drivestick.getRawButton(2)) {
 			Piston1.set(DoubleSolenoid.Value.kForward);
 			Piston2.set(DoubleSolenoid.Value.kForward);
 		}
-		if (stick.getRawButton(1)) {
+		if (Drivestick.getRawButton(1)) {
 			Hand.set(DoubleSolenoid.Value.kForward);
 		}else{
 			Hand.set(DoubleSolenoid.Value.kReverse);
 		}
-		if (stick.getRawButton(8)) {
+		if (Drivestick.getRawButton(8)) {
 			Piston1.set(DoubleSolenoid.Value.kOff);
 			Piston2.set(DoubleSolenoid.Value.kOff);
 			Hand.set(DoubleSolenoid.Value.kOff);

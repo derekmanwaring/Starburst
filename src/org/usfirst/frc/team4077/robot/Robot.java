@@ -57,7 +57,7 @@ import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 
 //Note to thy self. Ye of little faith giveth up not hope -Scott Dong
 public class Robot extends IterativeRobot {
-private static final double SPEED_FACTOR = 0.25;
+private static final double SPEED_FACTOR = 0.60;
 //	Definitions of OBjects
 	DoubleSolenoid Piston1 = new DoubleSolenoid(0, 1);
 	DoubleSolenoid Piston2 = new DoubleSolenoid(2, 3);
@@ -199,9 +199,8 @@ private static final double SPEED_FACTOR = 0.25;
 					continue;
 				}
 				Imgproc.circle(mat, new Point(centerX,centerY), 20, new Scalar(255,0,0), 3);
-				Date lastSeenAsDate = new Date(lastTimeSeen);
-				System.out.println(String.format("Last seen at %2d:%2d, Number: %1d, Distance: %3d, X: %3d, Y:%3d",
-						lastSeenAsDate.getMinutes(), lastSeenAsDate.getSeconds(),
+				System.out.println(String.format("Last seen %d seconds ago, Number: %1d, Distance: %3d, X: %3d, Y:%3d",
+						(System.currentTimeMillis() - lastTimeSeen) / 1000,
 						numberOfContours, separationDistance, centerX, centerY));
 				
 		
@@ -232,12 +231,14 @@ private static final double SPEED_FACTOR = 0.25;
 	 */
 	@Override
 	public void autonomousPeriodic() {
-		if (lastTimeSeen < (System.currentTimeMillis() - 1000)){
+		if (lastTimeSeen < (System.currentTimeMillis() - 500)){
 			myRobot.drive (0.0,0.0);
 			return;
 		}
-		if (separationDistance < 145) {
-			myRobot.drive(-0.25, 0.0);
+		if (separationDistance < 120) {
+			double curve;
+			curve = (((double) centerX) - 160.0) / 160.0;
+			myRobot.drive(-0.4, curve);
 		}else{
 			myRobot.drive (0.0,0.0);
 		}

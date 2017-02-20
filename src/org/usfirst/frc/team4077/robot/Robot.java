@@ -25,6 +25,7 @@ import org.usfirst.frc.team4077.robot.GripPipeline;
 import edu.wpi.cscore.CvSink;
 import edu.wpi.cscore.CvSource;
 import edu.wpi.cscore.UsbCamera;
+import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.IterativeRobot;
@@ -57,7 +58,7 @@ import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 
 //Note to thy self. Ye of little faith giveth up not hope -Scott Dong
 public class Robot extends IterativeRobot {
-private static final double SPEED_FACTOR = 0.60;
+private static final double SPEED_FACTOR = 0.50;
 //	Definitions of OBjects
 	DoubleSolenoid Piston1 = new DoubleSolenoid(0, 1);
 	DoubleSolenoid Piston2 = new DoubleSolenoid(2, 3);
@@ -77,12 +78,37 @@ private static final double SPEED_FACTOR = 0.60;
 	int numberOfContours = 0;
 	int separationDistance = 0;
 	Compressor C = new Compressor(0);
+	AnalogInput irSensor = new AnalogInput(0);
 	    
 	RobotName robotName;
+	private GearHandState gearHandState = GearHandState.CLOSE;
 	enum RobotName {
 		STELLA,
 		SUMMER
+		
+	
 	}
+	enum GearHandState {
+		OPEN,
+		CLOSE
+	}
+	enum AutoState {
+		STARTLEFT,
+		STARTRIGHT,
+		STARTCENTER,
+		VISION,
+		GEARDROP,
+		BACKUP
+	}
+	enum StartPosition {
+		LEFT,
+		RIGHT,
+		CENTER
+	}
+	private AutoState autoState = AutoState.VISION;
+	private StartPosition startPosition = StartPosition.LEFT;
+	private double gearDropFinished;
+	private double visionFinished;
 
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -90,6 +116,7 @@ private static final double SPEED_FACTOR = 0.60;
 	 */
 	@Override
 	public void robotInit() {
+		C.setClosedLoopControl(true);
 		File cpuInfoFile = new File("/etc/RobotName");
 		String line = null;
 		try {
@@ -199,9 +226,12 @@ private static final double SPEED_FACTOR = 0.60;
 					continue;
 				}
 				Imgproc.circle(mat, new Point(centerX,centerY), 20, new Scalar(255,0,0), 3);
-				System.out.println(String.format("Last seen %d seconds ago, Number: %1d, Distance: %3d, X: %3d, Y:%3d",
-						(System.currentTimeMillis() - lastTimeSeen) / 1000,
-						numberOfContours, separationDistance, centerX, centerY));
+				if (autoState == AutoState.VISION){
+					System.out.println(String.format("Last seen %d seconds ago, Number: %1d, Distance: %3d, X: %3d, Y:%3d",
+							(System.currentTimeMillis() - lastTimeSeen) / 1000,
+							numberOfContours, separationDistance, centerX, centerY));
+				}
+						
 				
 		
 				// Give the output stream a new image to display
@@ -222,7 +252,17 @@ private static final double SPEED_FACTOR = 0.60;
 	 */
 	@Override
 	public void autonomousInit() {
+		startPosition = StartPosition.LEFT;
 		timer.reset();
+		if (startPosition == StartPosition.LEFT){
+			autoState = AutoState.STARTLEFT;
+		}else if (startPosition == StartPosition.RIGHT){
+			autoState = AutoState.STARTRIGHT;
+			
+		}else if (startPosition == StartPosition.CENTER){
+			autoState = AutoState.STARTCENTER;
+		}
+		
 		timer.start();
 	}
 
@@ -231,17 +271,60 @@ private static final double SPEED_FACTOR = 0.60;
 	 */
 	@Override
 	public void autonomousPeriodic() {
+//		if (timer.get() < 1.0) {
+//			myRobot.drive(-0.6, 0.0);
+//		}else if (timer.get() <1.5) {
+//			myRobot.tankDrive(-0.4, 0.4);
+		switch (autoState) {
+		case STARTLEFT:
+			if (timer.get() < 1.0) {
+				myRobot.drive(-0.6, 0.0);
+				}else if (timer.get() < 1.5){
+					myRobot.tankDrive(-0.7, 0.7);
+				}else{
+					System.out.println("Changing autostate to vision");
+					autoState = AutoState.VISION;
+				}
+			break;
+		case VISION:
+			visionDrive();
+			break;
+		case GEARDROP:
+			System.out.println("Changing Autostate to Backup");
+			gearHandState = GearHandState.OPEN;
+			if (timer.get() - visionFinished < 0.5) {
+				autoState = AutoState.BACKUP;
+				gearDropFinished = timer.get();
+			}
+			break;
+		case BACKUP:
+			if (timer.get() - gearDropFinished < 1.0) {
+				myRobot.drive(0.5, 0.0);
+			}
+			break;
+		}
+			
+		
+		
+		setGearHandSolenoid();
+		
+	}
+	private void visionDrive() {
 		if (lastTimeSeen < (System.currentTimeMillis() - 500)){
 			myRobot.drive (0.0,0.0);
 			return;
 		}
-		if (separationDistance < 120) {
+		if (separationDistance < 140) {
 			double curve;
 			curve = (((double) centerX) - 160.0) / 160.0;
 			myRobot.drive(-0.4, curve);
 		}else{
+			System.out.println("Changing auto to geardrop");
 			myRobot.drive (0.0,0.0);
+			autoState = AutoState.GEARDROP;
+			visionFinished = timer.get();
 		}
+		
 	}
 
 	/**
@@ -260,14 +343,7 @@ private static final double SPEED_FACTOR = 0.60;
 //		Arcade Drive for Robot
 		myRobot.arcadeDrive(Drivestick);
 //		myRobot.tankDrive(Drivestick.getRawAxis(1), Drivestick.getRawAxis(5));;
-		
-//		Compressor Control
-		if (Drivestick.getRawButton(5)) {
-		C.setClosedLoopControl(true);
-		}
-		if (Drivestick.getRawButton(6)){
-		C.setClosedLoopControl(false);
-		}
+	System.out.println("IR Value" + irSensor.getValue() );
 
 //		Solenoids Control
 		if (Drivestick.getRawButton(3)) {
@@ -285,20 +361,29 @@ private static final double SPEED_FACTOR = 0.60;
 			Piston1.set(DoubleSolenoid.Value.kForward);
 			Piston2.set(DoubleSolenoid.Value.kForward);
 		}
-		if (Drivestick.getRawButton(1)) {
-			Hand.set(DoubleSolenoid.Value.kForward);
-		}else{
-			Hand.set(DoubleSolenoid.Value.kReverse);
-		}
-		if (Drivestick.getRawButton(8)) {
-			Piston1.set(DoubleSolenoid.Value.kOff);
-			Piston2.set(DoubleSolenoid.Value.kOff);
-			Hand.set(DoubleSolenoid.Value.kOff);
+		if (Drivestick.getRawButton(6) || Armstick.getRawButton(6)) {
+			gearHandState = GearHandState.OPEN;
+		} else{
+			gearHandState = GearHandState.CLOSE;
 		}
 		
+	
 		
-
+		
+	
+		setGearHandSolenoid();
+			
 	}
+	private void setGearHandSolenoid() {
+		
+		if (gearHandState  == GearHandState.OPEN) {
+			Hand.set(DoubleSolenoid.Value.kForward);
+		}
+		else if (gearHandState == GearHandState.CLOSE){
+				Hand.set(DoubleSolenoid.Value.kReverse);
+		}
+	}
+	
 
 	/**
 	 * This function is called periodically during test mode

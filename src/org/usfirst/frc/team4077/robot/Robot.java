@@ -252,7 +252,9 @@ private static final double SPEED_FACTOR = 0.50;
 	 */
 	@Override
 	public void autonomousInit() {
-		startPosition = StartPosition.LEFT;
+//		Change line below to change code for position of robot LEFt/RIGHT/CENTER
+		startPosition = StartPosition.CENTER;
+		
 		timer.reset();
 		if (startPosition == StartPosition.LEFT){
 			autoState = AutoState.STARTLEFT;
@@ -262,7 +264,8 @@ private static final double SPEED_FACTOR = 0.50;
 		}else if (startPosition == StartPosition.CENTER){
 			autoState = AutoState.STARTCENTER;
 		}
-		
+//		Piston1.set(DoubleSolenoid.Value.kForward);
+//		Piston2.set(DoubleSolenoid.Value.kReverse);
 		timer.start();
 	}
 
@@ -276,6 +279,9 @@ private static final double SPEED_FACTOR = 0.50;
 //		}else if (timer.get() <1.5) {
 //			myRobot.tankDrive(-0.4, 0.4);
 		switch (autoState) {
+		case STARTCENTER:
+			autoState = AutoState.VISION;
+			break;
 		case STARTLEFT:
 			if (timer.get() < 1.0) {
 				myRobot.drive(-0.6, 0.0);
@@ -283,6 +289,15 @@ private static final double SPEED_FACTOR = 0.50;
 					myRobot.tankDrive(-0.7, 0.7);
 				}else{
 					System.out.println("Changing autostate to vision");
+					autoState = AutoState.VISION;
+				}
+			break;
+		case STARTRIGHT:
+			if (timer.get() < 1.0) {
+				myRobot.drive(-0.6, 0.0);
+				}else if (timer.get() < 1.5){
+					myRobot.tankDrive(0.7, -0.7);
+				}else{
 					autoState = AutoState.VISION;
 				}
 			break;
@@ -311,10 +326,18 @@ private static final double SPEED_FACTOR = 0.50;
 	}
 	private void visionDrive() {
 		if (lastTimeSeen < (System.currentTimeMillis() - 500)){
-			myRobot.drive (0.0,0.0);
+			double noCameracurve = 0.0;
+			if (startPosition == StartPosition.LEFT) {
+				noCameracurve = 0.2;
+			} else if (startPosition == StartPosition.RIGHT) {
+				noCameracurve = -0.2;
+			}else if (startPosition == StartPosition.CENTER){
+				noCameracurve = 0.0;
+			}
+			myRobot.drive (-0.3,noCameracurve);
 			return;
 		}
-		if (separationDistance < 140) {
+		if (separationDistance < 145) {
 			double curve;
 			curve = (((double) centerX) - 160.0) / 160.0;
 			myRobot.drive(-0.4, curve);
@@ -366,6 +389,12 @@ private static final double SPEED_FACTOR = 0.50;
 		} else{
 			gearHandState = GearHandState.CLOSE;
 		}
+		if (Drivestick.getRawButton(5))
+		{
+			RopeClimb.set(0.2);
+	}else{
+		RopeClimb.set(0.0);
+	}
 		
 	
 		

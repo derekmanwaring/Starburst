@@ -253,7 +253,7 @@ private static final double SPEED_FACTOR = 0.50;
 	@Override
 	public void autonomousInit() {
 //		Change line below to change code for position of robot LEFt/RIGHT/CENTER
-		startPosition = StartPosition.RIGHT;
+		startPosition = StartPosition.CENTER;
 		
 		timer.reset();
 		if (startPosition == StartPosition.LEFT){
@@ -369,18 +369,18 @@ private static final double SPEED_FACTOR = 0.50;
 	System.out.println("IR Value" + irSensor.getValue() );
 
 //		Solenoids Control
-		if (Drivestick.getRawButton(3)) {
+		if (Drivestick.getRawButton(3) || Armstick.getRawButton(3)) {
 			Piston1.set(DoubleSolenoid.Value.kReverse);
 			Piston2.set(DoubleSolenoid.Value.kReverse);
 			
 		}
 
-		if (Drivestick.getRawButton(4)) {
+		if (Drivestick.getRawButton(4)|| Armstick.getRawButton(4)) {
 			Piston1.set(DoubleSolenoid.Value.kForward);
 			Piston2.set(DoubleSolenoid.Value.kReverse);
 			
 		}
-		if (Drivestick.getRawButton(2)) {
+		if (Drivestick.getRawButton(2)|| Armstick.getRawButton(2)) {
 			Piston1.set(DoubleSolenoid.Value.kForward);
 			Piston2.set(DoubleSolenoid.Value.kForward);
 		}
@@ -389,13 +389,17 @@ private static final double SPEED_FACTOR = 0.50;
 		} else{
 			gearHandState = GearHandState.CLOSE;
 		}
-		if (Drivestick.getRawButton(5))
-		{
+	
+		if (Drivestick.getRawButton(5) || Armstick.getRawButton(5)) {
 			RopeClimb.set(-0.5);
 	}else{
 		RopeClimb.set(0.0);
 	}
-		
+		if (Drivestick.getRawButton(1) || Armstick.getRawButton(1)) {
+			RopeClimb.set(0.3);
+	}else{
+		RopeClimb.set(0.0);
+	}
 	
 		
 		

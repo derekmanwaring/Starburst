@@ -253,7 +253,7 @@ private static final double SPEED_FACTOR = 0.50;
 	@Override
 	public void autonomousInit() {
 //		Change line below to change code for position of robot LEFt/RIGHT/CENTER
-		startPosition = StartPosition.CENTER;
+		startPosition = StartPosition.RIGHT;
 		
 		timer.reset();
 		if (startPosition == StartPosition.LEFT){
@@ -264,8 +264,8 @@ private static final double SPEED_FACTOR = 0.50;
 		}else if (startPosition == StartPosition.CENTER){
 			autoState = AutoState.STARTCENTER;
 		}
-//		Piston1.set(DoubleSolenoid.Value.kForward);
-//		Piston2.set(DoubleSolenoid.Value.kReverse);
+		Piston1.set(DoubleSolenoid.Value.kForward);
+		Piston2.set(DoubleSolenoid.Value.kReverse);
 		timer.start();
 	}
 
@@ -286,17 +286,17 @@ private static final double SPEED_FACTOR = 0.50;
 			if (timer.get() < 1.5) {
 				myRobot.drive(-0.6, 0.0);
 				}else if (timer.get() < 2.0){
-					myRobot.tankDrive(-0.7, 0.7);
+					myRobot.tankDrive(0.7, -0.7);
 				}else{
 					System.out.println("Changing autostate to vision");
 					autoState = AutoState.VISION;
 				}
 			break;
 		case STARTRIGHT:
-			if (timer.get() < 1.5) {
+			if (timer.get() < 2.0) {
 				myRobot.drive(-0.6, 0.0);
-				}else if (timer.get() < 2.0){
-					myRobot.tankDrive(0.7, -0.7);
+				}else if (timer.get() < 2.8){
+					myRobot.tankDrive(0.65, -0.65);
 				}else{
 					autoState = AutoState.VISION;
 				}
@@ -325,28 +325,21 @@ private static final double SPEED_FACTOR = 0.50;
 		
 	}
 	private void visionDrive() {
-		if (lastTimeSeen < (System.currentTimeMillis() - 500)){
-			double noCameracurve = 0.0;
-			if (startPosition == StartPosition.LEFT) {
-				noCameracurve = 0.0;
-			} else if (startPosition == StartPosition.RIGHT) {
-				noCameracurve = 0.0;
-			}else if (startPosition == StartPosition.CENTER){
-				noCameracurve = 0.0;
-			}
-			myRobot.drive (-0.3,noCameracurve);
-			return;
-		}
-		if (separationDistance < 140) {
+
+		
+		if (separationDistance < 150) {
 			double curve;
 			curve = (((double) centerX) - 160.0) / 160.0;
 			myRobot.drive(-0.4, curve);
-		}else{
+		}
+		if (timer.get() > 10){
 			System.out.println("Changing auto to geardrop");
 			myRobot.drive (0.0,0.0);
 			autoState = AutoState.GEARDROP;
 			visionFinished = timer.get();
 		}
+
+
 		
 	}
 
@@ -391,15 +384,12 @@ private static final double SPEED_FACTOR = 0.50;
 		}
 	
 		if (Drivestick.getRawButton(5) || Armstick.getRawButton(5)) {
-			RopeClimb.set(-0.5);
+			RopeClimb.set(-0.75);
 	}else{
 		RopeClimb.set(0.0);
 	}
-		if (Drivestick.getRawButton(1) || Armstick.getRawButton(1)) {
-			RopeClimb.set(0.3);
-	}else{
-		RopeClimb.set(0.0);
-	}
+	
+	
 	
 		
 		

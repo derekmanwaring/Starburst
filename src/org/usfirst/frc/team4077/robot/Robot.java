@@ -109,6 +109,9 @@ private static final double SPEED_FACTOR = 0.50;
 	private StartPosition startPosition = StartPosition.LEFT;
 	private double gearDropFinished;
 	private double visionFinished;
+	private UsbCamera camera;
+	private VisionThread visionThread;
+	private Thread visionThread2;
 
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -116,6 +119,8 @@ private static final double SPEED_FACTOR = 0.50;
 	 */
 	@Override
 	public void robotInit() {
+		camera = CameraServer.getInstance().startAutomaticCapture();
+		camera.setResolution(640, 480);
 		C.setClosedLoopControl(true);
 		File cpuInfoFile = new File("/etc/RobotName");
 		String line = null;
@@ -163,17 +168,15 @@ private static final double SPEED_FACTOR = 0.50;
 		
 		
 //		Camera Section and Vision Tracking	
-//		defaultCamera();
+
 		
-		visionTrackingCamera();
+	
 		
 	}
 	private void visionTrackingCamera() {
 		// TODO Auto-generated method stub
-		VisionThread visionThread;
-		Object imgLock = new Object();
-		UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
 		camera.setResolution(320, 240);
+		Object imgLock = new Object();
 		visionThread = new VisionThread(camera, new GripPipeline(), pipeline -> {
 			ArrayList<MatOfPoint> filterContoursOutput = pipeline.filterContoursOutput();
 			numberOfContours = filterContoursOutput.size();
@@ -202,7 +205,6 @@ private static final double SPEED_FACTOR = 0.50;
 			}
 		});
 		visionThread.start();
-		Thread visionThread2;
 		visionThread2 = new Thread(() -> {
 		
 			// Get a CvSink. This will capture Mats from the camera
@@ -241,17 +243,14 @@ private static final double SPEED_FACTOR = 0.50;
 		visionThread2.setDaemon(true);
 		visionThread2.start();
 		
-	}
-	private void defaultCamera() {
-		UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
-		// Set the resolution
-		camera.setResolution(640, 480);
+
 	}
 	/**
 	 * This function is run once each time the robot enters autonomous mode
 	 */
 	@Override
 	public void autonomousInit() {
+		visionTrackingCamera();
 //		Change line below to change code for position of robot LEFt/RIGHT/CENTER
 		startPosition = StartPosition.RIGHT;
 		
@@ -283,10 +282,10 @@ private static final double SPEED_FACTOR = 0.50;
 			autoState = AutoState.VISION;
 			break;
 		case STARTLEFT:
-			if (timer.get() < 1.5) {
+			if (timer.get() < 2.0) {
 				myRobot.drive(-0.6, 0.0);
-				}else if (timer.get() < 2.0){
-					myRobot.tankDrive(0.7, -0.7);
+				}else if (timer.get() < 3.0){
+					myRobot.tankDrive(-0.65, 0.65);
 				}else{
 					System.out.println("Changing autostate to vision");
 					autoState = AutoState.VISION;
@@ -295,7 +294,7 @@ private static final double SPEED_FACTOR = 0.50;
 		case STARTRIGHT:
 			if (timer.get() < 2.0) {
 				myRobot.drive(-0.6, 0.0);
-				}else if (timer.get() < 2.8){
+				}else if (timer.get() < 3.0){
 					myRobot.tankDrive(0.65, -0.65);
 				}else{
 					autoState = AutoState.VISION;
@@ -349,6 +348,11 @@ private static final double SPEED_FACTOR = 0.50;
 	 */
 	@Override
 	public void teleopInit() {
+		if (visionThread != null) {
+			visionThread.interrupt();
+			visionThread2.interrupt();
+		}
+		camera.setResolution(640, 480);
 	}
 
 	/**

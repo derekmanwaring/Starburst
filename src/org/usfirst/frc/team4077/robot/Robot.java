@@ -122,6 +122,20 @@ private static final double SPEED_FACTOR = 0.50;
 		camera = CameraServer.getInstance().startAutomaticCapture();
 		camera.setResolution(640, 480);
 		C.setClosedLoopControl(true);
+		motorSetup();
+	
+		
+		
+		
+		
+		
+//		Camera Section and Vision Tracking	
+
+		
+	
+		
+	}
+	private void motorSetup() {
 		File cpuInfoFile = new File("/etc/RobotName");
 		String line = null;
 		try {
@@ -161,17 +175,6 @@ private static final double SPEED_FACTOR = 0.50;
 			}
 			myRobot = new RobotDrive(frontLeft, rearLeft, frontRight, rearRight);
 		}
-	
-		
-		
-		
-		
-		
-//		Camera Section and Vision Tracking	
-
-		
-	
-		
 	}
 	private void visionTrackingCamera() {
 		// TODO Auto-generated method stub

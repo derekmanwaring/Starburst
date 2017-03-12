@@ -122,7 +122,7 @@ private static final double SPEED_FACTOR = 0.50;
 		camera = CameraServer.getInstance().startAutomaticCapture();
 		camera.setResolution(640, 480);
 		C.setClosedLoopControl(true);
-		motorSetup();
+		motorSetup(SPEED_FACTOR);
 	
 		
 		
@@ -135,7 +135,7 @@ private static final double SPEED_FACTOR = 0.50;
 	
 		
 	}
-	private void motorSetup() {
+	private void motorSetup(double speedFactor) {
 		File cpuInfoFile = new File("/etc/RobotName");
 		String line = null;
 		try {
@@ -153,10 +153,10 @@ private static final double SPEED_FACTOR = 0.50;
 		if (line != null) {
 			if (line.equals("Stella")) {
 				robotName = RobotName.STELLA;
-				frontLeft = new ScaledCANTalon(2, SPEED_FACTOR);
-				rearLeft = new ScaledCANTalon(1, SPEED_FACTOR);
-				frontRight = new ScaledCANTalon(3, SPEED_FACTOR);
-				rearRight = new ScaledCANTalon(4, SPEED_FACTOR);
+				frontLeft = new ScaledCANTalon(2, speedFactor);
+				rearLeft = new ScaledCANTalon(1, speedFactor);
+				frontRight = new ScaledCANTalon(3, speedFactor);
+				rearRight = new ScaledCANTalon(4, speedFactor);
 				
 				frontLeft.setInverted(true);
 				rearLeft.setInverted(true);
@@ -166,10 +166,10 @@ private static final double SPEED_FACTOR = 0.50;
 
 			}else if (line.equals("Summer")) {
 				robotName = RobotName.SUMMER;
-				frontLeft = new ScaledCANTalon(3, SPEED_FACTOR);
-				rearLeft = new ScaledCANTalon(4, SPEED_FACTOR);
-				frontRight = new ScaledCANTalon(2, SPEED_FACTOR);
-				rearRight = new ScaledCANTalon(1, SPEED_FACTOR);
+				frontLeft = new ScaledCANTalon(3, speedFactor);
+				rearLeft = new ScaledCANTalon(4, speedFactor);
+				frontRight = new ScaledCANTalon(2, speedFactor);
+				rearRight = new ScaledCANTalon(1, speedFactor);
 			}else{
 				System.out.println("I don't know robotname" + line);
 			}

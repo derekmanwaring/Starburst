@@ -58,8 +58,7 @@ import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 
 //Note to thy self. Ye of little faith giveth up not hope -Scott Dong
 public class Robot extends IterativeRobot {
-private static final double SPEED_FACTOR = 0.50;
-//	Definitions of OBjects
+//	Definitions of Objects
 	DoubleSolenoid Piston1 = new DoubleSolenoid(0, 1);
 	DoubleSolenoid Piston2 = new DoubleSolenoid(2, 3);
 	DoubleSolenoid Hand = new DoubleSolenoid(4, 5);
@@ -122,7 +121,8 @@ private static final double SPEED_FACTOR = 0.50;
 		camera = CameraServer.getInstance().startAutomaticCapture();
 		camera.setResolution(640, 480);
 		C.setClosedLoopControl(true);
-		motorSetup();
+		
+		
 	
 		
 		
@@ -135,7 +135,7 @@ private static final double SPEED_FACTOR = 0.50;
 	
 		
 	}
-	private void motorSetup() {
+	private void motorSetup(double speedFactor) {
 		File cpuInfoFile = new File("/etc/RobotName");
 		String line = null;
 		try {
@@ -153,10 +153,10 @@ private static final double SPEED_FACTOR = 0.50;
 		if (line != null) {
 			if (line.equals("Stella")) {
 				robotName = RobotName.STELLA;
-				frontLeft = new ScaledCANTalon(2, SPEED_FACTOR);
-				rearLeft = new ScaledCANTalon(1, SPEED_FACTOR);
-				frontRight = new ScaledCANTalon(3, SPEED_FACTOR);
-				rearRight = new ScaledCANTalon(4, SPEED_FACTOR);
+				frontLeft = new ScaledCANTalon(2, speedFactor);
+				rearLeft = new ScaledCANTalon(1, speedFactor);
+				frontRight = new ScaledCANTalon(3, speedFactor);
+				rearRight = new ScaledCANTalon(4, speedFactor);
 				
 				frontLeft.setInverted(true);
 				rearLeft.setInverted(true);
@@ -166,10 +166,10 @@ private static final double SPEED_FACTOR = 0.50;
 
 			}else if (line.equals("Summer")) {
 				robotName = RobotName.SUMMER;
-				frontLeft = new ScaledCANTalon(3, SPEED_FACTOR);
-				rearLeft = new ScaledCANTalon(4, SPEED_FACTOR);
-				frontRight = new ScaledCANTalon(2, SPEED_FACTOR);
-				rearRight = new ScaledCANTalon(1, SPEED_FACTOR);
+				frontLeft = new ScaledCANTalon(3, speedFactor);
+				rearLeft = new ScaledCANTalon(4, speedFactor);
+				frontRight = new ScaledCANTalon(2, speedFactor);
+				rearRight = new ScaledCANTalon(1, speedFactor);
 			}else{
 				System.out.println("I don't know robotname" + line);
 			}
@@ -253,9 +253,10 @@ private static final double SPEED_FACTOR = 0.50;
 	 */
 	@Override
 	public void autonomousInit() {
+		motorSetup(0.5);
 		visionTrackingCamera();
 //		Change line below to change code for position of robot LEFt/RIGHT/CENTER
-		startPosition = StartPosition.RIGHT;
+		startPosition = StartPosition.CENTER;
 		
 		timer.reset();
 		if (startPosition == StartPosition.LEFT){
@@ -288,7 +289,7 @@ private static final double SPEED_FACTOR = 0.50;
 			if (timer.get() < 2.0) {
 				myRobot.drive(-0.6, 0.0);
 				}else if (timer.get() < 3.0){
-					myRobot.tankDrive(-0.65, 0.65);
+					myRobot.tankDrive(-0.62, 0.62);
 				}else{
 					System.out.println("Changing autostate to vision");
 					autoState = AutoState.VISION;
@@ -298,7 +299,7 @@ private static final double SPEED_FACTOR = 0.50;
 			if (timer.get() < 2.0) {
 				myRobot.drive(-0.6, 0.0);
 				}else if (timer.get() < 3.0){
-					myRobot.tankDrive(0.65, -0.65);
+					myRobot.tankDrive(0.62, -0.62);
 				}else{
 					autoState = AutoState.VISION;
 				}
@@ -351,6 +352,7 @@ private static final double SPEED_FACTOR = 0.50;
 	 */
 	@Override
 	public void teleopInit() {
+		motorSetup(0.75);
 		if (visionThread != null) {
 			visionThread.interrupt();
 			visionThread2.interrupt();
@@ -366,7 +368,7 @@ private static final double SPEED_FACTOR = 0.50;
 //		Arcade Drive for Robot
 		myRobot.arcadeDrive(Drivestick);
 //		myRobot.tankDrive(Drivestick.getRawAxis(1), Drivestick.getRawAxis(5));;
-	System.out.println("IR Value" + irSensor.getValue() );
+	
 
 //		Solenoids Control
 		if (Drivestick.getRawButton(3) || Armstick.getRawButton(3)) {

@@ -111,6 +111,7 @@ public class Robot extends IterativeRobot {
 	private UsbCamera camera;
 	private VisionThread visionThread;
 	private Thread visionThread2;
+	private UsbCamera groundCamera;
 
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -118,8 +119,10 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void robotInit() {
-		camera = CameraServer.getInstance().startAutomaticCapture();
-		camera.setResolution(640, 480);
+		camera = CameraServer.getInstance().startAutomaticCapture(1);
+		groundCamera = CameraServer.getInstance().startAutomaticCapture(0);
+		camera.setResolution(320, 240);
+		groundCamera.setResolution(320, 240);
 		C.setClosedLoopControl(true);
 		
 		
@@ -256,6 +259,7 @@ public class Robot extends IterativeRobot {
 		motorSetup(0.5);
 		visionTrackingCamera();
 //		Change line below to change code for position of robot LEFt/RIGHT/CENTER
+		centerX = 160;
 		startPosition = StartPosition.CENTER;
 		
 		timer.reset();
@@ -352,13 +356,15 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void teleopInit() {
-		motorSetup(0.75);
+		motorSetup(0.70);
 		if (visionThread != null) {
 			visionThread.interrupt();
 			visionThread2.interrupt();
 		}
-		camera.setResolution(640, 480);
+		camera.setResolution(320, 240);
 	}
+	
+	
 
 	/**
 	 * This function is called periodically during operator control
@@ -393,7 +399,7 @@ public class Robot extends IterativeRobot {
 		}
 	
 		if (Drivestick.getRawButton(5) || Armstick.getRawButton(5)) {
-			RopeClimb.set(-0.75);
+			RopeClimb.set(-0.85);
 	}else{
 		RopeClimb.set(0.0);
 	}

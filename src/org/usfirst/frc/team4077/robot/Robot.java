@@ -291,9 +291,9 @@ public class Robot extends IterativeRobot {
 			break;
 		case STARTLEFT:
 			if (timer.get() < 2.0) {
-				myRobot.drive(-0.6, 0.0);
+				myRobot.drive(-0.65, 0.0);
 				}else if (timer.get() < 3.0){
-					myRobot.tankDrive(-0.62, 0.62);
+					myRobot.tankDrive(-0.77, 0.77);
 				}else{
 					System.out.println("Changing autostate to vision");
 					autoState = AutoState.VISION;
@@ -301,9 +301,9 @@ public class Robot extends IterativeRobot {
 			break;
 		case STARTRIGHT:
 			if (timer.get() < 2.0) {
-				myRobot.drive(-0.6, 0.0);
+				myRobot.drive(-0.65, 0.0);
 				}else if (timer.get() < 3.0){
-					myRobot.tankDrive(0.62, -0.62);
+					myRobot.tankDrive(0.77, -0.77);
 				}else{
 					autoState = AutoState.VISION;
 				}
@@ -337,9 +337,9 @@ public class Robot extends IterativeRobot {
 		if (separationDistance < 150) {
 			double curve;
 			curve = (((double) centerX) - 160.0) / 160.0;
-			myRobot.drive(-0.4, curve);
+			myRobot.drive(-0.60, curve);
 		}
-		if (timer.get() > 10){
+		if (timer.get() > 7.5){
 			System.out.println("Changing auto to geardrop");
 			myRobot.drive (0.0,0.0);
 			autoState = AutoState.GEARDROP;
@@ -356,7 +356,7 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void teleopInit() {
-		motorSetup(0.70);
+		motorSetup(0.7);
 		if (visionThread != null) {
 			visionThread.interrupt();
 			visionThread2.interrupt();

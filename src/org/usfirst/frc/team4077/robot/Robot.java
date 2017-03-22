@@ -58,6 +58,8 @@ import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 
 //Note to thy self. Ye of little faith giveth up not hope -Scott Dong
 public class Robot extends IterativeRobot {
+private static final int DELIVERY_DISTANCE = 400;
+private static final int GEARDROP_DISTANCE = 650;
 //	Definitions of Objects
 	DoubleSolenoid Piston1 = new DoubleSolenoid(0, 1);
 	DoubleSolenoid Piston2 = new DoubleSolenoid(2, 3);
@@ -77,8 +79,7 @@ public class Robot extends IterativeRobot {
 	int numberOfContours = 0;
 	int separationDistance = 0;
 	Compressor C = new Compressor(0);
-	AnalogInput irSensor = new AnalogInput(0);
-	    
+	AnalogInput irSensor = new AnalogInput(0);   
 	RobotName robotName;
 	private GearHandState gearHandState = GearHandState.CLOSE;
 	enum RobotName {
@@ -96,6 +97,7 @@ public class Robot extends IterativeRobot {
 		STARTRIGHT,
 		STARTCENTER,
 		VISION,
+		DELIVERY,
 		GEARDROP,
 		BACKUP
 	}
@@ -124,6 +126,9 @@ public class Robot extends IterativeRobot {
 		camera.setResolution(320, 240);
 		groundCamera.setResolution(320, 240);
 		C.setClosedLoopControl(true);
+		irSensor.setOversampleBits(0);
+		irSensor.setAverageBits(5);
+		
 		
 		
 	
@@ -256,11 +261,11 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void autonomousInit() {
-		motorSetup(0.5);
+		motorSetup(1.0);
 		visionTrackingCamera();
 //		Change line below to change code for position of robot LEFt/RIGHT/CENTER
 		centerX = 160;
-		startPosition = StartPosition.CENTER;
+		startPosition = StartPosition.LEFT;
 		
 		timer.reset();
 		if (startPosition == StartPosition.LEFT){
@@ -271,8 +276,6 @@ public class Robot extends IterativeRobot {
 		}else if (startPosition == StartPosition.CENTER){
 			autoState = AutoState.STARTCENTER;
 		}
-		Piston1.set(DoubleSolenoid.Value.kForward);
-		Piston2.set(DoubleSolenoid.Value.kReverse);
 		timer.start();
 	}
 
@@ -290,20 +293,20 @@ public class Robot extends IterativeRobot {
 			autoState = AutoState.VISION;
 			break;
 		case STARTLEFT:
-			if (timer.get() < 2.0) {
-				myRobot.drive(-0.65, 0.0);
-				}else if (timer.get() < 3.0){
-					myRobot.tankDrive(-0.77, 0.77);
+			if (timer.get() < 1.45) {
+				myRobot.drive(-0.50, 0.0);
+				}else if (timer.get() < 1.95){
+					myRobot.tankDrive(-0.50, 0.50);
 				}else{
 					System.out.println("Changing autostate to vision");
 					autoState = AutoState.VISION;
 				}
 			break;
 		case STARTRIGHT:
-			if (timer.get() < 2.0) {
-				myRobot.drive(-0.65, 0.0);
-				}else if (timer.get() < 3.0){
-					myRobot.tankDrive(0.77, -0.77);
+			if (timer.get() < 1.45) {
+				myRobot.drive(-0.50, 0.0);
+				}else if (timer.get() < 1.95){
+					myRobot.tankDrive(0.50, -0.50);
 				}else{
 					autoState = AutoState.VISION;
 				}
@@ -311,16 +314,29 @@ public class Robot extends IterativeRobot {
 		case VISION:
 			visionDrive();
 			break;
+		case DELIVERY:
+			System.out.println("IR Value" + irSensor.getAverageValue());
+			if (irSensor.getAverageValue() > GEARDROP_DISTANCE){
+				
+				myRobot.drive(0.0, 0.0);
+				autoState = AutoState.GEARDROP;
+				visionFinished = timer.get();
+			}else{
+				double magnitude = ((double)(GEARDROP_DISTANCE - irSensor.getAverageValue())) / ((double)GEARDROP_DISTANCE);
+				myRobot.drive(-0.1 - magnitude * 0.2, 0.0);
+			}
+			break;
+				
 		case GEARDROP:
 			System.out.println("Changing Autostate to Backup");
 			gearHandState = GearHandState.OPEN;
-			if (timer.get() - visionFinished < 0.5) {
+			if (timer.get() - visionFinished > 0.5) {
 				autoState = AutoState.BACKUP;
 				gearDropFinished = timer.get();
 			}
 			break;
 		case BACKUP:
-			if (timer.get() - gearDropFinished < 1.0) {
+			if (timer.get() - gearDropFinished < 0.5) {
 				myRobot.drive(0.5, 0.0);
 			}
 			break;
@@ -334,16 +350,18 @@ public class Robot extends IterativeRobot {
 	private void visionDrive() {
 
 		
-		if (separationDistance < 150) {
+		
 			double curve;
-			curve = (((double) centerX) - 160.0) / 160.0;
-			myRobot.drive(-0.60, curve);
-		}
-		if (timer.get() > 7.5){
-			System.out.println("Changing auto to geardrop");
-			myRobot.drive (0.0,0.0);
-			autoState = AutoState.GEARDROP;
-			visionFinished = timer.get();
+			curve = 0.0;
+			if (System.currentTimeMillis() - lastTimeSeen < 250){
+				curve = (((double) centerX) - 160.0) / 400.0;
+			}
+			myRobot.drive(-0.30, curve);
+		
+		if (irSensor.getAverageValue() > DELIVERY_DISTANCE){
+			System.out.println("Changing auto to delivery");
+			autoState = AutoState.DELIVERY;
+			
 		}
 
 
@@ -356,7 +374,7 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void teleopInit() {
-		motorSetup(0.7);
+		motorSetup(0.85);
 		if (visionThread != null) {
 			visionThread.interrupt();
 			visionThread2.interrupt();
@@ -373,7 +391,7 @@ public class Robot extends IterativeRobot {
 	public void teleopPeriodic() {
 //		Arcade Drive for Robot
 		myRobot.arcadeDrive(Drivestick);
-//		myRobot.tankDrive(Drivestick.getRawAxis(1), Drivestick.getRawAxis(5));;
+		
 	
 
 //		Solenoids Control
@@ -399,7 +417,7 @@ public class Robot extends IterativeRobot {
 		}
 	
 		if (Drivestick.getRawButton(5) || Armstick.getRawButton(5)) {
-			RopeClimb.set(-0.85);
+			RopeClimb.set(-0.95);
 	}else{
 		RopeClimb.set(0.0);
 	}

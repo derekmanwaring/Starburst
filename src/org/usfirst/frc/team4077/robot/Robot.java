@@ -261,11 +261,11 @@ private static final int GEARDROP_DISTANCE = 650;
 	 */
 	@Override
 	public void autonomousInit() {
-		motorSetup(1.0);
+//		motorSetup(1.0);
 		visionTrackingCamera();
 //		Change line below to change code for position of robot LEFt/RIGHT/CENTER
 		centerX = 160;
-		startPosition = StartPosition.LEFT;
+		startPosition = StartPosition.CENTER;
 		
 		timer.reset();
 		if (startPosition == StartPosition.LEFT){
@@ -293,7 +293,7 @@ private static final int GEARDROP_DISTANCE = 650;
 			autoState = AutoState.VISION;
 			break;
 		case STARTLEFT:
-			if (timer.get() < 1.45) {
+			if (timer.get() < 1.35) {
 				myRobot.drive(-0.50, 0.0);
 				}else if (timer.get() < 1.95){
 					myRobot.tankDrive(-0.50, 0.50);
@@ -303,7 +303,7 @@ private static final int GEARDROP_DISTANCE = 650;
 				}
 			break;
 		case STARTRIGHT:
-			if (timer.get() < 1.45) {
+			if (timer.get() < 1.35) {
 				myRobot.drive(-0.50, 0.0);
 				}else if (timer.get() < 1.95){
 					myRobot.tankDrive(0.50, -0.50);
@@ -337,7 +337,7 @@ private static final int GEARDROP_DISTANCE = 650;
 			break;
 		case BACKUP:
 			if (timer.get() - gearDropFinished < 0.5) {
-				myRobot.drive(0.5, 0.0);
+				myRobot.drive(0.25, 0.0);
 			}
 			break;
 		}
@@ -374,7 +374,7 @@ private static final int GEARDROP_DISTANCE = 650;
 	 */
 	@Override
 	public void teleopInit() {
-		motorSetup(0.85);
+		motorSetup(0.90);
 		if (visionThread != null) {
 			visionThread.interrupt();
 			visionThread2.interrupt();
@@ -390,7 +390,10 @@ private static final int GEARDROP_DISTANCE = 650;
 	@Override
 	public void teleopPeriodic() {
 //		Arcade Drive for Robot
-		myRobot.arcadeDrive(Drivestick);
+//		myRobot.arcadeDrive(Drivestick);
+		myRobot.arcadeDrive(Drivestick, true);
+		
+		
 		
 	
 

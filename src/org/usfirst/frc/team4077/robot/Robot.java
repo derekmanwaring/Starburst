@@ -143,7 +143,7 @@ private static final int GEARDROP_DISTANCE = 650;
 	
 		
 	}
-	private void motorSetup(double speedFactor) {
+	private void motorSetup(double speedFactor, boolean safetyEnabled) {
 		File cpuInfoFile = new File("/etc/RobotName");
 		String line = null;
 		try {
@@ -182,6 +182,7 @@ private static final int GEARDROP_DISTANCE = 650;
 				System.out.println("I don't know robotname" + line);
 			}
 			myRobot = new RobotDrive(frontLeft, rearLeft, frontRight, rearRight);
+			myRobot.setSafetyEnabled(safetyEnabled);
 		}
 	}
 	private void visionTrackingCamera() {
@@ -261,7 +262,7 @@ private static final int GEARDROP_DISTANCE = 650;
 	 */
 	@Override
 	public void autonomousInit() {
-//		motorSetup(1.0);
+		motorSetup(1.0, false);
 		visionTrackingCamera();
 //		Change line below to change code for position of robot LEFt/RIGHT/CENTER
 		centerX = 160;
@@ -374,7 +375,7 @@ private static final int GEARDROP_DISTANCE = 650;
 	 */
 	@Override
 	public void teleopInit() {
-		motorSetup(0.90);
+		motorSetup(0.90, true);
 		if (visionThread != null) {
 			visionThread.interrupt();
 			visionThread2.interrupt();

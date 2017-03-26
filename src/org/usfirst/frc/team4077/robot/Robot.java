@@ -58,8 +58,8 @@ import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 
 //Note to thy self. Ye of little faith giveth up not hope -Scott Dong
 public class Robot extends IterativeRobot {
-private static final int DELIVERY_DISTANCE = 400;
-private static final int GEARDROP_DISTANCE = 650;
+private static final int DELIVERY_DISTANCE = 380;
+private static final int GEARDROP_DISTANCE = 1300;
 //	Definitions of Objects
 	DoubleSolenoid Piston1 = new DoubleSolenoid(0, 1);
 	DoubleSolenoid Piston2 = new DoubleSolenoid(2, 3);
@@ -143,7 +143,7 @@ private static final int GEARDROP_DISTANCE = 650;
 	
 		
 	}
-	private void motorSetup(double speedFactor) {
+	private void motorSetup(double speedFactor, boolean safetyEnabled) {
 		File cpuInfoFile = new File("/etc/RobotName");
 		String line = null;
 		try {
@@ -182,6 +182,7 @@ private static final int GEARDROP_DISTANCE = 650;
 				System.out.println("I don't know robotname" + line);
 			}
 			myRobot = new RobotDrive(frontLeft, rearLeft, frontRight, rearRight);
+			myRobot.setSafetyEnabled(safetyEnabled);
 		}
 	}
 	private void visionTrackingCamera() {
@@ -261,11 +262,11 @@ private static final int GEARDROP_DISTANCE = 650;
 	 */
 	@Override
 	public void autonomousInit() {
-//		motorSetup(1.0);
+		motorSetup(1.0, false);
 		visionTrackingCamera();
 //		Change line below to change code for position of robot LEFt/RIGHT/CENTER
 		centerX = 160;
-		startPosition = StartPosition.CENTER;
+		startPosition = StartPosition.RIGHT;
 		
 		timer.reset();
 		if (startPosition == StartPosition.LEFT){
@@ -293,9 +294,9 @@ private static final int GEARDROP_DISTANCE = 650;
 			autoState = AutoState.VISION;
 			break;
 		case STARTLEFT:
-			if (timer.get() < 1.35) {
+			if (timer.get() < 1.20) {
 				myRobot.drive(-0.50, 0.0);
-				}else if (timer.get() < 1.95){
+				}else if (timer.get() < 1.90){
 					myRobot.tankDrive(-0.50, 0.50);
 				}else{
 					System.out.println("Changing autostate to vision");
@@ -303,9 +304,9 @@ private static final int GEARDROP_DISTANCE = 650;
 				}
 			break;
 		case STARTRIGHT:
-			if (timer.get() < 1.35) {
+			if (timer.get() < 1.20) {
 				myRobot.drive(-0.50, 0.0);
-				}else if (timer.get() < 1.95){
+				}else if (timer.get() < 1.90){
 					myRobot.tankDrive(0.50, -0.50);
 				}else{
 					autoState = AutoState.VISION;
@@ -314,18 +315,18 @@ private static final int GEARDROP_DISTANCE = 650;
 		case VISION:
 			visionDrive();
 			break;
-		case DELIVERY:
-			System.out.println("IR Value" + irSensor.getAverageValue());
-			if (irSensor.getAverageValue() > GEARDROP_DISTANCE){
-				
-				myRobot.drive(0.0, 0.0);
-				autoState = AutoState.GEARDROP;
-				visionFinished = timer.get();
-			}else{
-				double magnitude = ((double)(GEARDROP_DISTANCE - irSensor.getAverageValue())) / ((double)GEARDROP_DISTANCE);
-				myRobot.drive(-0.1 - magnitude * 0.2, 0.0);
-			}
-			break;
+//		case DELIVERY:
+//			System.out.println("IR Value" + irSensor.getAverageValue());
+//			if (irSensor.getAverageValue() > GEARDROP_DISTANCE){
+//				
+//				myRobot.drive(0.0, 0.0);
+//				autoState = AutoState.GEARDROP;
+//				visionFinished = timer.get();
+//			}else{
+//				double magnitude = ((double)(GEARDROP_DISTANCE - irSensor.getAverageValue())) / ((double)GEARDROP_DISTANCE);
+//				myRobot.drive(-0.1 - magnitude * 0.2, 0.0);
+//			}
+//			break;
 				
 		case GEARDROP:
 			System.out.println("Changing Autostate to Backup");
@@ -355,18 +356,15 @@ private static final int GEARDROP_DISTANCE = 650;
 			curve = 0.0;
 			if (System.currentTimeMillis() - lastTimeSeen < 250){
 				curve = (((double) centerX) - 160.0) / 400.0;
+
+				myRobot.drive(-0.30, curve);
 			}
-			myRobot.drive(-0.30, curve);
-		
-		if (irSensor.getAverageValue() > DELIVERY_DISTANCE){
-			System.out.println("Changing auto to delivery");
-			autoState = AutoState.DELIVERY;
-			
-		}
-
-
-		
+			if (System.currentTimeMillis() - lastTimeSeen > 1000){
+				myRobot.drive(0.0, 0.0);
+				autoState = AutoState.GEARDROP;
+				visionFinished = timer.get();
 	}
+			}
 
 	/**
 	 * This function is called once each time the robot enters tele-operated
@@ -374,7 +372,7 @@ private static final int GEARDROP_DISTANCE = 650;
 	 */
 	@Override
 	public void teleopInit() {
-		motorSetup(0.90);
+		motorSetup(0.90, true);
 		if (visionThread != null) {
 			visionThread.interrupt();
 			visionThread2.interrupt();
@@ -390,9 +388,8 @@ private static final int GEARDROP_DISTANCE = 650;
 	@Override
 	public void teleopPeriodic() {
 //		Arcade Drive for Robot
-//		myRobot.arcadeDrive(Drivestick);
 		myRobot.arcadeDrive(Drivestick, true);
-		
+		System.out.println("IR Value" + irSensor.getAverageValue());
 		
 		
 	

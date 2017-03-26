@@ -338,7 +338,7 @@ private static final int GEARDROP_DISTANCE = 1300;
 			break;
 		case BACKUP:
 			if (timer.get() - gearDropFinished < 0.5) {
-				myRobot.drive(0.25, 0.0);
+				myRobot.drive(0.15, 0.0);
 			}
 			break;
 		}
@@ -359,7 +359,7 @@ private static final int GEARDROP_DISTANCE = 1300;
 
 				myRobot.drive(-0.30, curve);
 			}
-			if (System.currentTimeMillis() - lastTimeSeen > 1000){
+			if (timer.get() < 8.0){
 				myRobot.drive(0.0, 0.0);
 				autoState = AutoState.GEARDROP;
 				visionFinished = timer.get();

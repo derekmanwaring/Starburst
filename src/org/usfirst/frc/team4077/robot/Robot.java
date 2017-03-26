@@ -10,7 +10,10 @@ import java.lang.management.ManagementFactory;
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.Deque;
+import java.util.LinkedList;
 
 import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
@@ -58,6 +61,8 @@ import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 
 //Note to thy self. Ye of little faith giveth up not hope -Scott Dong
 public class Robot extends IterativeRobot {
+	// We think this is the variance the IR sensor will report when the robot is stopped
+	private static final double IR_VARIANCE_WHEN_STOPPED = 0.1;
 private static final int DELIVERY_DISTANCE = 380;
 private static final int GEARDROP_DISTANCE = 1300;
 //	Definitions of Objects
@@ -81,6 +86,8 @@ private static final int GEARDROP_DISTANCE = 1300;
 	int separationDistance = 0;
 	Compressor C = new Compressor(0);
 	AnalogInput irSensor = new AnalogInput(0);   
+	Deque<Integer> lastIrReadings = new LinkedList<>();
+	int maxIrReadings = 15;
 	RobotName robotName;
 	private GearHandState gearHandState = GearHandState.CLOSE;
 	enum RobotName {
@@ -244,12 +251,6 @@ private static final int GEARDROP_DISTANCE = 1300;
 					continue;
 				}
 				Imgproc.circle(mat, new Point(centerX,centerY), 20, new Scalar(255,0,0), 3);
-				if (autoState == AutoState.VISION){
-					System.out.println(String.format("Last seen %d seconds ago, Number: %1d, Distance: %3d, X: %3d, Y:%3d",
-							(System.currentTimeMillis() - lastTimeSeen) / 1000,
-							numberOfContours, separationDistance, centerX, centerY));
-				}
-						
 				
 		
 				// Give the output stream a new image to display
@@ -355,20 +356,59 @@ private static final int GEARDROP_DISTANCE = 1300;
 	}
 	private void visionDrive() {
 
-		
-		
+			int currentIrReading = irSensor.getAverageValue();
+			lastIrReadings.push(currentIrReading);
+			if (lastIrReadings.size() > maxIrReadings) {
+				lastIrReadings.removeLast();
+			}
+			double mean = calculateMean(lastIrReadings);
+			double variance = calculateVariance(lastIrReadings, mean);
+			double normalizedVariance = variance / mean;
+
+			System.out.println(String.format("IR normalized variance %5.3f (%7.3f/%8.3f) for last %3d readings. Target seen %d seconds ago, Number: %1d, Distance: %3d, X: %3d, Y:%3d",
+					normalizedVariance, variance, mean, lastIrReadings.size(),
+					(System.currentTimeMillis() - lastTimeSeen) / 1000, numberOfContours, separationDistance, centerX,
+					centerY));
+			
+			if (lastIrReadings.size() == maxIrReadings && normalizedVariance < IR_VARIANCE_WHEN_STOPPED) {
+				myRobot.drive(0.0, 0.0);
+				autoState = AutoState.GEARDROP;
+				visionFinished = timer.get();
+			}
+	
 			double curve;
 			curve = 0.0;
 			if (System.currentTimeMillis() - lastTimeSeen < 250){
 				curve = (((double) centerX) - 160.0) / 400.0;
-
-				myRobot.drive(-0.30, curve);
-			} else if (seenAtLeastOnce && System.currentTimeMillis() - lastTimeSeen > 1000){
-				myRobot.drive(0.0, 0.0);
-				autoState = AutoState.GEARDROP;
-				visionFinished = timer.get();
-	}
 			}
+
+			myRobot.drive(-0.30, curve);
+	}
+
+	private static double calculateMean(Collection<Integer> readings) {
+		long sum = 0;
+
+		for (int reading: readings) {
+			sum += reading;
+		}
+
+		double mean = ((double) sum) / ((double) readings.size());
+	
+		return mean;
+	}
+
+	private static double calculateVariance(Collection<Integer> readings, double mean) {
+		double sumOfSquares = 0.0;
+	
+		for (int reading: readings) {
+			double diffFromMean = ((double) reading) - mean;
+			sumOfSquares += diffFromMean * diffFromMean;
+		}
+		
+		return Math.sqrt(sumOfSquares);
+	}
+
+
 
 	/**
 	 * This function is called once each time the robot enters tele-operated
